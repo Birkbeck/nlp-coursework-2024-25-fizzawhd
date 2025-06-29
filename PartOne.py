@@ -19,7 +19,6 @@ cmudict = nltk.corpus.cmudict.dict()
 nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
 
-
 def count_syl(word, d):
     """Counts the number of syllables in a word given a dictionary of syllables per word.
     If the word is not in the dictionary, syllables are estimated by counting vowel clusters."""

@@ -14,6 +14,7 @@ from nltk.corpus import stopwords
 nltk.download('punkt')
 nltk.download('stopwords')
 
+
 def preprocess_data(csv_path):
     """Step (a): Load and clean hansard40000.csv"""
     df = pd.read_csv(csv_path)
