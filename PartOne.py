@@ -1,64 +1,88 @@
-#Re-assessment template 2025
-
-# Note: The template functions here and the dataframe format for structuring your solution is a suggested but not mandatory approach. You can use a different approach if you like, as long as you clearly answer the questions and communicate your answers clearly.
+# Re-assessment template 2025
 
 import nltk
 import spacy
+import pickle
+import math
+import pandas as pd
 from pathlib import Path
+from collections import Counter
+from nltk.tokenize import word_tokenize, sent_tokenize
 
+# Download required NLTK resources if needed
+nltk.download('punkt')
+nltk.download('cmudict')
 
+# Load CMU dictionary once
+cmudict = nltk.corpus.cmudict.dict()
+
+# Load spaCy model
 nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
 
 
-
-def fk_level(text, d):
-    """Returns the Flesch-Kincaid Grade Level of a text (higher grade is more difficult).
-    Requires a dictionary of syllables per word.
-
-    Args:
-        text (str): The text to analyze.
-        d (dict): A dictionary of syllables per word.
-
-    Returns:
-        float: The Flesch-Kincaid Grade Level of the text. (higher grade is more difficult)
-    """
-    pass
-
-
 def count_syl(word, d):
     """Counts the number of syllables in a word given a dictionary of syllables per word.
-    if the word is not in the dictionary, syllables are estimated by counting vowel clusters
-
-    Args:
-        word (str): The word to count syllables for.
-        d (dict): A dictionary of syllables per word.
-
-    Returns:
-        int: The number of syllables in the word.
-    """
-    pass
+    If the word is not in the dictionary, syllables are estimated by counting vowel clusters."""
+    word = word.lower()
+    if word in d:
+        return len([ph for ph in d[word][0] if ph[-1].isdigit()])
+    else:
+        return 1  # fallback
 
 
-def read_novels(path=Path.cwd() / "texts" / "novels"):
+def fk_level(text, d):
+    """Returns the Flesch-Kincaid Grade Level of a text (higher grade is more difficult)."""
+    sents = sent_tokenize(text)
+    tokens = word_tokenize(text)
+    words = [w for w in tokens if w.isalpha()]
+    syllables = sum(count_syl(w, d) for w in words)
+    if len(sents) > 0 and len(words) > 0:
+        score = 0.39 * (len(words) / len(sents)) + 11.8 * (syllables / len(words)) - 15.59
+        return round(score, 4)
+    else:
+        return 0
+
+
+def read_novels(path=Path.cwd() / "p1-texts" / "novels"):
     """Reads texts from a directory of .txt files and returns a DataFrame with the text, title,
     author, and year"""
-    pass
+    data = []
+    for file in path.glob("*.txt"):
+        parts = file.stem.split('-')
+        title = parts[0].replace('_', ' ')
+        author = parts[1].replace('_', ' ')
+        year = int(parts[2])
+        text = file.read_text(encoding="utf-8")
+        data.append({
+            'text': text,
+            'title': title,
+            'author': author,
+            'year': year
+        })
+    df = pd.DataFrame(data)
+    df = df.sort_values(by='year').reset_index(drop=True)
+    return df
 
 
 def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
     """Parses the text of a DataFrame using spaCy, stores the parsed docs as a column and writes 
-    the resulting  DataFrame to a pickle file"""
-    pass
+    the resulting DataFrame to a pickle file"""
+    df['parsed'] = df['text'].apply(lambda txt: nlp(txt))
+    store_path.mkdir(exist_ok=True)
+    with open(store_path / out_name, 'wb') as f:
+        pickle.dump(df, f)
 
 
 def nltk_ttr(text):
     """Calculates the type-token ratio of a text. Text is tokenized using nltk.word_tokenize."""
-    pass
+    tokens = word_tokenize(text.lower())
+    words = [w for w in tokens if w.isalpha()]
+    return round(len(set(words)) / len(words), 4) if len(words) > 0 else 0
 
 
 def get_ttrs(df):
-    """helper function to add ttr to a dataframe"""
+    """Helper function to add TTR to a dataframe"""
     results = {}
     for i, row in df.iterrows():
         results[row["title"]] = nltk_ttr(row["text"])
@@ -66,56 +90,75 @@ def get_ttrs(df):
 
 
 def get_fks(df):
-    """helper function to add fk scores to a dataframe"""
+    """Helper function to add FK scores to a dataframe"""
     results = {}
-    cmudict = nltk.corpus.cmudict.dict()
     for i, row in df.iterrows():
-        results[row["title"]] = round(fk_level(row["text"], cmudict), 4)
+        results[row["title"]] = fk_level(row["text"], cmudict)
     return results
 
 
 def subjects_by_verb_pmi(doc, target_verb):
-    """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
-    pass
+    """Extracts the PMI scores for subjects of a given verb in a parsed document."""
+    subj_freq = Counter()
+    co_occur = Counter()
+    total_tokens = len(doc)
 
+    for tok in doc:
+        if tok.dep_ == "nsubj":
+            subj = tok.text.lower()
+            subj_freq[subj] += 1
+            if tok.head.lemma_ == target_verb:
+                co_occur[subj] += 1
+
+    total_subjs = sum(subj_freq.values())
+    total_targets = sum(co_occur.values())
+
+    pmi_scores = {}
+    for subj in co_occur:
+        p_subj = subj_freq[subj] / total_subjs
+        p_target = total_targets / total_tokens
+        p_joint = co_occur[subj] / total_tokens
+        if p_subj > 0 and p_target > 0:
+            pmi_scores[subj] = round(math.log2(p_joint / (p_subj * p_target)), 4)
+
+    return sorted(pmi_scores.items(), key=lambda x: x[1], reverse=True)[:10]
 
 
 def subjects_by_verb_count(doc, verb):
-    """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
-    pass
-
+    """Extracts the most common subjects of a given verb in a parsed document."""
+    return Counter([
+        tok.text.lower()
+        for tok in doc
+        if tok.dep_ == "nsubj" and tok.head.lemma_ == verb
+    ]).most_common(10)
 
 
 def adjective_counts(doc):
-    """Extracts the most common adjectives in a parsed document. Returns a list of tuples."""
-    pass
-
+    """Extracts the most common adjectives in a parsed document."""
+    return Counter([
+        tok.text.lower()
+        for tok in doc
+        if tok.pos_ == "ADJ"
+    ]).most_common(10)
 
 
 if __name__ == "__main__":
-    """
-    uncomment the following lines to run the functions once you have completed them
-    """
-    #path = Path.cwd() / "p1-texts" / "novels"
-    #print(path)
-    #df = read_novels(path) # this line will fail until you have completed the read_novels function above.
-    #print(df.head())
-    #nltk.download("cmudict")
-    #parse(df)
-    #print(df.head())
-    #print(get_ttrs(df))
-    #print(get_fks(df))
-    #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
-    # print(adjective_counts(df))
-    """ 
-    for i, row in df.iterrows():
-        print(row["title"])
-        print(subjects_by_verb_count(row["parsed"], "hear"))
-        print("\n")
+    
+    path = Path.cwd() / "p1-texts" / "novels"
+    df = read_novels(path)
+    print(df.head())
+
+    parse(df)  # saves to pickles/parsed.pickle
+
+    print("TTRs:", get_ttrs(df))
+    print("FK Scores:", get_fks(df))
+
+    # Load parsed
+    with open(Path.cwd() / "pickles" / "parsed.pickle", 'rb') as f:
+        df = pickle.load(f)
 
     for i, row in df.iterrows():
-        print(row["title"])
-        print(subjects_by_verb_pmi(row["parsed"], "hear"))
-        print("\n")
-    """
-
+        print(f"\n{row['title']}")
+        print("Subjects by verb count (hear):", subjects_by_verb_count(row['parsed'], "hear"))
+        print("Subjects by verb PMI (hear):", subjects_by_verb_pmi(row['parsed'], "hear"))
+        print("Adjective counts:", adjective_counts(row['parsed']))

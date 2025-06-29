@@ -1,1 +1,16 @@
-Answers to the text questions go here.
+____________________________________________ Part 1 _______________________________________
+A readability score, the Flesch-Kincaid Grade Level, is calculated, among other means, by the number of sentences and syllables per word. Although it helps analyze contemporary texts, it may not be sufficient for studying 19th-century novels.
+
+One, literature of the 19th century tends to include extensive sentences, comprised of multiple clauses, resulting in overly long sentences that can lead to higher grades. Second, most of the words that one can find in these texts are obsolete and do not belong to everyday language anymore. Such words could be spelled out in a complicated manner and are not always more difficult to comprehend in a historical context. The formula, however, considers them as tough.
+
+Moreover, the Flesch-Kincaid formula does not take the style of punctuation and the form of narration, cultural and literary context into consideration. As an example, a poem or prose containing a lot of dialogue may sound more accessible because of a simple sentence structure, although the meaning of it can be abstract or full of metaphors.
+
+Due to these reasons, the Flesch-Kincaid score can be a misleading indicator of the particular readability level or literary prose of 19th-century novels. It can thus be used to give a quantitative dimension, but when applied to historical literature, it must be used with some caution.
+
+__________________________________________ Part 2 _________________________________________
+
+The use of my custom tokenizer enhances text classification by cleaning up and simplifying the source text. It begins by lowercasing each word and removing punctuation marks with regular expressions. It then makes use of the word_tokenize () of NLTK to cut the text into words. Based on those tokens, it filters out the common words (words such as the, and, of, etc), and discards other words shorter than three characters, as these words are unlikely to be of any value.
+
+It also allows for eliminating noise in the dataset and ensures that the 3000-feature capacity of TfidfVectorizer is utilized on the tokens that are considered meaningful. Unlike a default tokenizer, this one is more content-oriented, and the model is more efficient and understandable compared to the default one.
+
+The custom tokenizer returned a somewhat weaker result than the n-gram version in my run, but it still performs well and can be generalized to other Datasets. It also provides added flexibility in how tokens are handled, which is particularly useful in practical NLP tasks where preprocessing often has a significant impact on results.
