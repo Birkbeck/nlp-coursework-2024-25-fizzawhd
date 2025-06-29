@@ -1,4 +1,3 @@
-# nlp-cw-template25
 # NLP Coursework Complete Report (Parts 1 & 2)
 
 ## Full Name (as on student record): Fizza Waheed
