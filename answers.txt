@@ -1,4 +1,4 @@
-____________________________________________ Part 1 _______________________________________
+_____________________________________________ Part 1 _______________________________________
 A readability score, the Flesch-Kincaid Grade Level, is calculated, among other means, by the number of sentences and syllables per word. Although it helps analyze contemporary texts, it may not be sufficient for studying 19th-century novels.
 
 One, literature of the 19th century tends to include extensive sentences, comprised of multiple clauses, resulting in overly long sentences that can lead to higher grades. Second, most of the words that one can find in these texts are obsolete and do not belong to everyday language anymore. Such words could be spelled out in a complicated manner and are not always more difficult to comprehend in a historical context. The formula, however, considers them as tough.
@@ -7,7 +7,7 @@ Moreover, the Flesch-Kincaid formula does not take the style of punctuation and 
 
 Due to these reasons, the Flesch-Kincaid score can be a misleading indicator of the particular readability level or literary prose of 19th-century novels. It can thus be used to give a quantitative dimension, but when applied to historical literature, it must be used with some caution.
 
-__________________________________________ Part 2 _________________________________________
+___________________________________________ Part 2 _________________________________________
 
 The use of my custom tokenizer enhances text classification by cleaning up and simplifying the source text. It begins by lowercasing each word and removing punctuation marks with regular expressions. It then makes use of the word_tokenize () of NLTK to cut the text into words. Based on those tokens, it filters out the common words (words such as the, and, of, etc), and discards other words shorter than three characters, as these words are unlikely to be of any value.
 
